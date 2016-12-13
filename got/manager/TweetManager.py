@@ -42,7 +42,7 @@ class TweetManager:
 				freshtweets = False
 				# Set 'until' criterion one day forward because Twitter search seems
 				# sometimes not to get all entries for a day. Timezone issue?
-				if dataSec is not None:
+				if dateSec is not None:
 					tweetCriteria.until = (datetime.date.fromtimestamp(dateSec) + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 					print "Setting until criteria to " + tweetCriteria.until
 
