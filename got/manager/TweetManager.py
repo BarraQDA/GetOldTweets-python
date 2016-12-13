@@ -33,7 +33,7 @@ class TweetManager:
 				refreshCursor = json['min_position']
 				tweets = PyQuery(json['items_html'])('div.js-stream-tweet')
 
-			if tweets is None or len(tweet) == 0:
+			if tweets is None or len(tweets) == 0:
 				if not freshtweets or dateSec is None:
 					abortCount += 1
 					if abortCount == abortAfter:
