@@ -35,21 +35,38 @@ class TweetManager:
 				if not freshtweets or dateSec is None:
 					break
 				freshtweets = False
-				tweetCriteria.until = datetime.date.fromtimestamp(dateSec).strftime("%Y-%m-%d")
+				# Set 'until' criterion one day forward because Twitter search seems
+				# sometimes not to get all entries for a day. Timezone issue?
+				tweetCriteria.until = (datetime.date.fromtimestamp(dateSec) + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 				print "Setting until criteria to " + tweetCriteria.until
 				refreshCursor = ''
 				continue
 
 			for tweetHTML in tweets:
 				tweetPQ = PyQuery(tweetHTML)
-				tweet = models.Tweet()
+
+				# Skip retweets
+				retweet = tweetPQ("span.js-retweet-text").text()
+				if retweet != '':
+					continue
+
+				# Ignore non-descending tweet IDs. This can happen when we do a restart
+				# following search exhaustion.
+				id = tweetPQ.attr("data-tweet-id");
+				if lastid is not None and id >= lastid:
+					if freshtweets:
+						raise "Out of order tweets!"
+
+					continue
+
+				freshtweets = True
+
 				usernameTweet = tweetPQ("span.username.js-action-profile-name b").text();
 				lang = tweetPQ("p.js-tweet-text").attr("lang")
 				txt = re.sub(r"\s+", " ", tweetPQ("p.js-tweet-text").text().replace('# ', '#').replace('@ ', '@'));
 				retweets = int(tweetPQ("span.ProfileTweet-action--retweet span.ProfileTweet-actionCount").attr("data-tweet-stat-count").replace(",", ""));
 				favorites = int(tweetPQ("span.ProfileTweet-action--favorite span.ProfileTweet-actionCount").attr("data-tweet-stat-count").replace(",", ""));
 				dateSec = int(tweetPQ("small.time span.js-short-timestamp").attr("data-time"));
-				id = tweetPQ.attr("data-tweet-id");
 				permalink = tweetPQ.attr("data-permalink-path");
 
 				geo = ''
@@ -57,13 +74,7 @@ class TweetManager:
 				if len(geoSpan) > 0:
 					geo = geoSpan.attr('title')
 
-				# Ignore non-descending tweet IDs. This can happen when we do a restart
-				# following search exhaustion.
-				if lastid is not None and id >= lastid:
-					continue
-
-				freshtweets = True
-
+				tweet = models.Tweet()
 				tweet.id = id
 				tweet.lang = lang
 				tweet.permalink = 'https://twitter.com' + permalink
