@@ -64,10 +64,10 @@ def main(argv):
 
 		outputFile = codecs.open(outputFileName, "a")
 		fieldnames = [ 'username', 'date', 'retweets', 'favorites', 'text', 'lang', 'geo', 'mentions', 'hashtags', 'id', 'permalink']
+		csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
 		# Write header row if file is empty
 		if outputFile.tell() == 0:
-			csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
-		csvwriter.writeheader()
+			csvwriter.writeheader()
 
 		print 'Searching...\n'
 
