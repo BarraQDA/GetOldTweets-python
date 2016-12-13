@@ -8,7 +8,7 @@ class TweetManager:
 		pass
 
 	@staticmethod
-	def getTweets(tweetCriteria, receiveBuffer = None, bufferLength = 100):
+	def getTweets(tweetCriteria, receiveBuffer = None, bufferLength = 100, lastid = None):
 		refreshCursor = ''
 
 		results = []
@@ -19,7 +19,6 @@ class TweetManager:
 			tweetCriteria.username = tweetCriteria.username[1:-1]
 
 		active = True
-		lastid = None
 		freshtweets = False
 		dateSec = None
 		abortAfter = 5

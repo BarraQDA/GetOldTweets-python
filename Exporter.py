@@ -65,14 +65,13 @@ def main(argv):
 		outputFile = codecs.open(outputFileName, "a+")
 		outputFile.seek(0,2)	# Go to the end of the file
 
-		# Write header row if file is empty
+		# Write header row if file is empty, otherwise find where we were up to
+		lastid = None
 		if outputFile.tell() == 0:
-			print "new file"
 			fieldnames = [ 'username', 'date', 'retweets', 'favorites', 'text', 'lang', 'geo', 		'mentions', 'hashtags', 'id', 'permalink']
 			csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
 			csvwriter.writeheader()
 		else:
-			print "append"
 			outputFile.seek(0,0)
 			inreader=unicodecsv.DictReader(outputFile)
 			fieldnames = inreader.fieldnames
@@ -90,7 +89,7 @@ def main(argv):
 			outputFile.flush()
 			print 'More %d saved on file...' % len(tweets)
 
-		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer)
+		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer, lastid=lastid)
 
 	except arg:
 		print 'Arguments parser error, try -h' + arg
