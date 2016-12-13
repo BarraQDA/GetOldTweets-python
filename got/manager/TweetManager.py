@@ -51,6 +51,9 @@ class TweetManager:
 			for tweetHTML in tweets:
 				tweetPQ = PyQuery(tweetHTML)
 
+				# Get timestamp to help resume
+				dateSec = int(tweetPQ("small.time span.js-short-timestamp").attr("data-time"));
+
 				# Skip retweets
 				retweet = tweetPQ("span.js-retweet-text").text()
 				if retweet != '':
@@ -73,7 +76,6 @@ class TweetManager:
 				txt = re.sub(r"\s+", " ", tweetPQ("p.js-tweet-text").text().replace('# ', '#').replace('@ ', '@'));
 				retweets = int(tweetPQ("span.ProfileTweet-action--retweet span.ProfileTweet-actionCount").attr("data-tweet-stat-count").replace(",", ""));
 				favorites = int(tweetPQ("span.ProfileTweet-action--favorite span.ProfileTweet-actionCount").attr("data-tweet-stat-count").replace(",", ""));
-				dateSec = int(tweetPQ("small.time span.js-short-timestamp").attr("data-time"));
 				permalink = tweetPQ.attr("data-permalink-path");
 
 				geo = ''
