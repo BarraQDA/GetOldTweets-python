@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys,getopt,got,datetime,codecs
+import sys,getopt,got,datetime,codecs,unicodecsv
 
 def main(argv):
 
@@ -10,6 +10,7 @@ def main(argv):
 
 	if len(argv) == 1 and argv[0] == '-h':
 		print """\nTo use this jar, you can pass the folowing attributes:
+        lang: Tweet language (2 letter code)
     username: Username of a specific twitter account (without @)
        since: The lower bound date (yyyy-mm-aa)
        until: The upper bound date (yyyy-mm-aa)
@@ -31,9 +32,10 @@ def main(argv):
 		return
 
 	try:
-		opts, args = getopt.getopt(argv, "", ("username=", "since=", "until=", "querysearch=", "toptweets", "maxtweets="))
-
+		opts, args = getopt.getopt(argv, "", ("lang=", "username=", "since=", "until=", "querysearch=", "toptweets", "maxtweets=","outfile="))
 		tweetCriteria = got.manager.TweetCriteria()
+
+		outputFileName = "output_got.csv"
 
 		for opt,arg in opts:
 			if opt == '--username':
@@ -54,18 +56,25 @@ def main(argv):
 			elif opt == '--maxtweets':
 				tweetCriteria.maxTweets = int(arg)
 
+			elif opt == '--lang':
+				tweetCriteria.lang = arg
 
-		outputFile = codecs.open("output_got.csv", "w+", "utf-8")
+			elif opt == '--outfile':
+				outputFileName = arg
 
-		outputFile.write('username;date;retweets;favorites;text;lang;geo;mentions;hashtags;id;permalink')
+		outputFile = codecs.open(outputFileName, "w+")
+		fieldnames = [ 'username', 'date', 'retweets', 'favorites', 'text', 'lang', 'geo', 'mentions', 'hashtags', 'id', 'permalink']
+		csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
+
+		csvwriter.writeheader()
 
 		print 'Searching...\n'
 
 		def receiveBuffer(tweets):
 			for t in tweets:
-				outputFile.write(('\n%s;%s;%d;%d;"%s";%s;%s;%s;%s;"%s";%s' % (t.username, t.date.strftime("%Y-%m-%d %H:%M"), t.retweets, t.favorites, t.text, t.lang, t.geo, t.mentions, t.hashtags, t.id, t.permalink)))
-			outputFile.flush();
-			print 'More %d saved on file...\n' % len(tweets)
+				csvwriter.writerow(vars(t))
+			outputFile.flush()
+			print 'More %d saved on file...' % len(tweets)
 
 		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer)
 
@@ -73,7 +82,7 @@ def main(argv):
 		print 'Arguments parser error, try -h' + arg
 	finally:
 		outputFile.close()
-		print 'Done. Output file generated "output_got.csv".'
+		print 'Done. Output file generated "' + outputFileName + '".'
 
 if __name__ == '__main__':
 	main(sys.argv[1:])

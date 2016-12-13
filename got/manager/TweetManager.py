@@ -19,17 +19,26 @@ class TweetManager:
 			tweetCriteria.username = tweetCriteria.username[1:-1]
 
 		active = True
+		lastid = None
+		freshtweets = False
+		dateSec = None
 
 		while active:
 			json = TweetManager.getJsonReponse(tweetCriteria, refreshCursor, cookieJar)
-			if len(json['items_html'].strip()) == 0:
-				break
 
-			refreshCursor = json['min_position']
-			tweets = PyQuery(json['items_html'])('div.js-stream-tweet')
+			tweets = None
+			if json is not None and len(json['items_html'].strip()) > 0:
+				refreshCursor = json['min_position']
+				tweets = PyQuery(json['items_html'])('div.js-stream-tweet')
 
-			if len(tweets) == 0:
-				break
+			if tweets is None or len(tweets) == 0:
+				if not freshtweets or dateSec is None:
+					break
+				freshtweets = False
+				tweetCriteria.until = datetime.date.fromtimestamp(dateSec).strftime("%Y-%m-%d")
+				print "Setting until criteria to " + tweetCriteria.until
+				refreshCursor = ''
+				continue
 
 			for tweetHTML in tweets:
 				tweetPQ = PyQuery(tweetHTML)
@@ -48,6 +57,13 @@ class TweetManager:
 				if len(geoSpan) > 0:
 					geo = geoSpan.attr('title')
 
+				# Ignore non-descending tweet IDs. This can happen when we do a restart
+				# following search exhaustion.
+				if lastid is not None and id >= lastid:
+					continue
+
+				freshtweets = True
+
 				tweet.id = id
 				tweet.lang = lang
 				tweet.permalink = 'https://twitter.com' + permalink
@@ -62,6 +78,8 @@ class TweetManager:
 
 				results.append(tweet)
 				resultsAux.append(tweet)
+
+				lastid = id
 
 				if receiveBuffer and len(resultsAux) >= bufferLength:
 					receiveBuffer(resultsAux)
@@ -82,6 +100,9 @@ class TweetManager:
 		url = "https://twitter.com/i/search/timeline?f=tweets&q=%s&src=typd&max_position=%s"
 
 		urlGetData = ''
+		if hasattr(tweetCriteria, 'lang'):
+			urlGetData += ' lang:' + tweetCriteria.lang
+
 		if hasattr(tweetCriteria, 'username'):
 			urlGetData += ' from:' + tweetCriteria.username
 
@@ -117,10 +138,9 @@ class TweetManager:
 			response = opener.open(url)
 			jsonResponse = response.read()
 		except:
-			print "Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.quote(urlGetData)
-			sys.exit()
-			return
+			#print "Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.quote(urlGetData)
+			#sys.exit()
+			return None
 
 		dataJson = json.loads(jsonResponse)
-
 		return dataJson
