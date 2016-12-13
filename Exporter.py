@@ -62,12 +62,25 @@ def main(argv):
 			elif opt == '--outfile':
 				outputFileName = arg
 
-		outputFile = codecs.open(outputFileName, "a")
-		fieldnames = [ 'username', 'date', 'retweets', 'favorites', 'text', 'lang', 'geo', 'mentions', 'hashtags', 'id', 'permalink']
-		csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
+		outputFile = codecs.open(outputFileName, "a+")
+		outputFile.seek(0,2)	# Go to the end of the file
+
 		# Write header row if file is empty
 		if outputFile.tell() == 0:
+			print "new file"
+			fieldnames = [ 'username', 'date', 'retweets', 'favorites', 'text', 'lang', 'geo', 		'mentions', 'hashtags', 'id', 'permalink']
+			csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
 			csvwriter.writeheader()
+		else:
+			print "append"
+			outputFile.seek(0,0)
+			inreader=unicodecsv.DictReader(outputFile)
+			fieldnames = inreader.fieldnames
+			# Real all lines to find last id
+			for row in inreader:
+				lastid = row['id']
+
+			csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
 
 		print 'Searching...\n'
 
