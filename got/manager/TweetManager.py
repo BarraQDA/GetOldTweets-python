@@ -22,6 +22,8 @@ class TweetManager:
 		lastid = None
 		freshtweets = False
 		dateSec = None
+		abortAfter = 5
+		abortCount = 0
 
 		while active:
 			json = TweetManager.getJsonReponse(tweetCriteria, refreshCursor, cookieJar)
@@ -31,14 +33,19 @@ class TweetManager:
 				refreshCursor = json['min_position']
 				tweets = PyQuery(json['items_html'])('div.js-stream-tweet')
 
-			if tweets is None or len(tweets) == 0:
+			if tweets is None or len(tweet) == 0:
 				if not freshtweets or dateSec is None:
-					break
+					abortCount += 1
+					if abortCount == abortAfter:
+						break
+
 				freshtweets = False
 				# Set 'until' criterion one day forward because Twitter search seems
 				# sometimes not to get all entries for a day. Timezone issue?
-				tweetCriteria.until = (datetime.date.fromtimestamp(dateSec) + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-				print "Setting until criteria to " + tweetCriteria.until
+				if dataSec is not None:
+					tweetCriteria.until = (datetime.date.fromtimestamp(dateSec) + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+					print "Setting until criteria to " + tweetCriteria.until
+
 				refreshCursor = ''
 				continue
 
@@ -60,6 +67,7 @@ class TweetManager:
 					continue
 
 				freshtweets = True
+				abortCount = 0
 
 				usernameTweet = tweetPQ("span.username.js-action-profile-name b").text();
 				lang = tweetPQ("p.js-tweet-text").attr("lang")
