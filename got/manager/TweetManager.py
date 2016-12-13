@@ -37,6 +37,7 @@ class TweetManager:
 					abortCount += 1
 					if abortCount == abortAfter:
 						break
+					print "Retrying..."
 
 				freshtweets = False
 				# Set 'until' criterion one day forward because Twitter search seems
