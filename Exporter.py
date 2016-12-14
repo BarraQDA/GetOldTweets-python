@@ -90,7 +90,7 @@ def main(argv):
 			outputFile.flush()
 			print 'More %d saved on file...' % len(tweets)
 
-		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer, lastid=lastid, lastdate=lastdate)
+		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer, lastid=lastid)
 
 	except arg:
 		print 'Arguments parser error, try -h' + arg
