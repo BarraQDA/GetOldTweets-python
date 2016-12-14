@@ -21,7 +21,7 @@ class TweetManager:
 		active = True
 		freshtweets = False
 		dateSec = None
-		abortAfter = 5
+		abortAfter = 2
 		abortCount = 0
 
 		while active:
@@ -40,13 +40,13 @@ class TweetManager:
 					print "Retrying..."
 
 				freshtweets = False
-				# Set 'until' criterion one day forward because Twitter search seems
-				# sometimes not to get all entries for a day. Timezone issue?
+				# Set 'until' criterion to date of last retrieved tweet
 				if dateSec is not None:
-					tweetCriteria.until = (datetime.date.fromtimestamp(dateSec) + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+					tweetCriteria.until = (datetime.datetime.utcfromtimestamp(dateSec) + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 					print "Setting until criteria to " + tweetCriteria.until
 
 				refreshCursor = ''
+				overlap = False
 				continue
 
 			for tweetHTML in tweets:
@@ -64,6 +64,7 @@ class TweetManager:
 				# following search exhaustion.
 				id = tweetPQ.attr("data-tweet-id");
 				if lastid is not None and id >= lastid:
+					overlap = True
 					if freshtweets:
 						raise "Out of order tweets!"
 
@@ -71,6 +72,10 @@ class TweetManager:
 
 				freshtweets = True
 				abortCount = 0
+
+				if not overlap:
+					# Add an empty tweet to signal possible missing tweets
+					resultsAux.append(models.Tweet())
 
 				usernameTweet = tweetPQ("span.username.js-action-profile-name b").text();
 				lang = tweetPQ("p.js-tweet-text").attr("lang")
@@ -140,6 +145,7 @@ class TweetManager:
 			if tweetCriteria.topTweets:
 				url = "https://twitter.com/i/search/timeline?q=%s&src=typd&max_position=%s"
 
+		#print "Cursor: " + refreshCursor
 		url = url % (urllib.quote(urlGetData), refreshCursor)
 
 		headers = [
@@ -158,8 +164,9 @@ class TweetManager:
 		try:
 			response = opener.open(url)
 			jsonResponse = response.read()
+			#print "Read response to: " + url
 		except:
-			#print "Twitter weird response. Try to see on browser: https://twitter.com/search?q=%s&src=typd" % urllib.quote(urlGetData)
+			print "Twitter weird response. Try to see on browser: " + url
 			#sys.exit()
 			return None
 

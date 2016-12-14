@@ -78,6 +78,7 @@ def main(argv):
 			# Real all lines to find last id
 			for row in inreader:
 				lastid = row['id']
+				lastdate = row['date']
 
 			csvwriter=unicodecsv.DictWriter(outputFile, fieldnames=fieldnames, extrasaction='ignore')
 
@@ -89,7 +90,7 @@ def main(argv):
 			outputFile.flush()
 			print 'More %d saved on file...' % len(tweets)
 
-		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer, lastid=lastid)
+		got.manager.TweetManager.getTweets(tweetCriteria, receiveBuffer, lastid=lastid, lastdate=lastdate)
 
 	except arg:
 		print 'Arguments parser error, try -h' + arg
