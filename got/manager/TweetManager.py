@@ -24,6 +24,8 @@ class TweetManager:
 		abortAfter = 2
 		abortCount = 0
 
+		overlap = True
+
 		while active:
 			json = TweetManager.getJsonReponse(tweetCriteria, refreshCursor, cookieJar)
 
@@ -164,7 +166,7 @@ class TweetManager:
 		try:
 			response = opener.open(url)
 			jsonResponse = response.read()
-			#print "Read response to: " + url
+			print "Read response to: " + url
 		except:
 			print "Twitter weird response. Try to see on browser: " + url
 			#sys.exit()
